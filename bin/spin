@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "slot_evolution"
+require "optparse"
+require 'pry'
+
+#  How to run :
+#
+#  bin/spin -p 'spec/fixtures/' -f 'game_config' -b 10 -s 100
+#
+#  Available test configs name : 
+#  'game_config'
+#  'test_config_1'
+#  'test_config_2'
+
+options = {}
+
+parser = OptionParser.new do |opts|
+  opts.on('-p',     '--path=',              'Path to game configuarion')     { |o| options[:path]                = o }
+  opts.on('-f',     '--config_name=',       'Config name')                   { |o| options[:file]                = o }
+  opts.on('-b',     '--bet=',               'Bet')                           { |o| options[:bet]                 = o.to_f }
+  opts.on('-s',     '--balance=',           'Balance')                       { |o| options[:balance]             = o.to_f }
+
+  opts.separator ''
+  opts.on_tail('-h', '--help', 'Show this message')      { abort opts.to_s }
+end
+parser.parse ARGV
+
+config           = SlotEvolution::Helpers::Config.new(options[:path], options[:file])
+options[:config] = config
+
+reels            = SlotEvolution::Slot::ReelSet.new(config)
+game             = SlotEvolution::Slot::Game.new(options.merge({reel_set: reels}))
+
+balance          = options[:balance] || 100.0
+bet              = options[:bet]
+
+SlotEvolution::Helpers::NicePrint.print_screen(game.reel_set.windows)
+SlotEvolution::Helpers::NicePrint.print_balance(balance)
+
+loop do
+  SlotEvolution::Helpers::NicePrint.print_control
+  command             = $stdin.gets
+  if command         == "\n"
+    balance          -= bet
+    played_game       = game.play
+    screen            = played_game.reel_set.windows.transpose
+    win               = played_game.win
+    balance          += win
+
+    SlotEvolution::Helpers::NicePrint.print_screen(game.reel_set.windows)
+    SlotEvolution::Helpers::NicePrint.print_win(win, bet)
+    SlotEvolution::Helpers::NicePrint.print_balance(balance)
+
+  end
+  if command == "exit\n" || balance < bet
+    SlotEvolution::Helpers::NicePrint.print_goodbye
+    break
+  end
+end 
+
+
+
+

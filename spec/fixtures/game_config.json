@@ -1,0 +1,23 @@
+{
+  "reel_length": 50,
+  "screen_height": 3,
+  "number_of_reels": 4,
+  "paytable": {
+  	"4": {
+      "Ace":   100,
+      "King":  50,
+      "Queen": 25,
+      "Jack":  10,
+      "Ten":   5,
+      "Nine":  2
+    },
+    "3": {
+      "Ace":   50,
+      "King":  25,
+      "Queen": 15,
+      "Jack":  5,
+      "Ten":   2,
+      "Nine":  1
+    }
+  }
+}

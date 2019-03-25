@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "slot_evolution"
+require "optparse"
+require 'pry'
+
+#  How to run :
+#
+#  bin/evolution -p 'spec/fixtures/' -f 'game_config' -b 10 -r 0.95 -e 10 -n 2 -g 15 -s 200_000 -i strips
+#
+#  Available test configs name : 
+#  'game_config'
+#  'test_config_1'
+#  'test_config_2'
+
+options = {}
+
+parser = OptionParser.new do |opts|
+  opts.on('-p',     '--path=',              'Path to game configuarion')     { |o| options[:path]                = o }
+  opts.on('-f',     '--config_name=',       'Config name')                   { |o| options[:file]                = o }
+  opts.on('-b',     '--bet=',               'Bet')                           { |o| options[:bet]                 = o.to_f }
+  opts.on('-r',     '--benchmark_rtp=',     'Benchmark RTP')                 { |o| options[:benchmark_rtp]       = o.to_f }
+  opts.on('-e',     '--population_size=',   'Population Size')               { |o| options[:population_size]     = o.to_i }
+  opts.on('-n',     '--number_of_parents=', 'Number of parents')             { |o| options[:number_of_parents]   = o.to_i }
+  opts.on('-g',     '--max_number_of_generations=', 'Max number of generations')   { |o| options[:max_number_of_generations] = o.to_i }
+  opts.on('-s',     '--number_of_simulations=', 'Number of simulations')     { |o| options[:number_of_simulations] = o.to_i }
+  opts.on('-i',     '--import_path=',       'Path to import configuarion')   { |o| options[:import_path]         = o }
+
+  opts.separator ''
+  opts.on_tail('-h', '--help', 'Show this message')      { abort opts.to_s }
+end
+parser.parse ARGV
+
+config           = SlotEvolution::Helpers::Config.new(options[:path], options[:file])
+options[:config] = config
+
+SlotEvolution::Helpers::OptionsValidator.validate_options!(options)
+
+evolution        = SlotEvolution::Evolution::Evolution.new(options)
+evolution.simulate
+
+strips           = evolution.current_generation.best_fit.reel_set.reels.map(&:strip)
+rtp              = evolution.current_generation.best_fit.rtp
+
+SlotEvolution::Helpers::ConfigExporter.export(options[:import_path], 
+                                              options[:config].raw_config, 
+                                              rtp, 
+                                              strips)
+
+
+
